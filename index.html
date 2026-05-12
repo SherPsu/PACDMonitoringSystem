@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PACD Monitoring System</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script type="module" src="script.js"></script>
+</head>
+<body>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-left">
+            <div class="login-left-content">
+                <div class="login-logo-mark">PACD</div>
+                <h2 class="login-left-title">MEMSEC Public Assistance Complaint Desk</h2>
+                <p class="login-left-sub">Monitoring System</p>
+                <ul class="login-features">
+                    <li>Real-time data entry and tracking</li>
+                    <li>Dashboard analytics and reports</li>
+                    <li>Weekly and monthly exports</li>
+                    <li>Activity history and audit log</li>
+                </ul>
+            </div>
+        </div>
+        <div class="login-right">
+            <div class="login-card">
+                <div class="login-brand">
+                    <div class="login-icon">M</div>
+                    <h1 class="login-title">Welcome Back</h1>
+                    <p class="login-subtitle">Sign in to your account to continue</p>
+                </div>
+                <form id="loginForm" class="login-form">
+                    <div class="form-group">
+                        <label class="form-label" for="loginEmail">Email Address</label>
+                        <div class="login-input-wrap">
+                            <svg class="login-input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+                            <input type="email" id="loginEmail" class="form-control login-input" placeholder="your@email.com" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="loginPassword">Password</label>
+                        <div class="login-input-wrap">
+                            <svg class="login-input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            <input type="password" id="loginPassword" class="form-control login-input" placeholder="Enter your password" required>
+                            <button type="button" class="password-toggle" onclick="app.togglePassword('loginPassword')">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <p id="loginError" class="login-error"></p>
+                    <button type="submit" class="login-btn" id="loginBtn">Sign In</button>
+                </form>
+                <p class="login-footer">MEMSEC &mdash; Public Assistance Complaint Desk</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container" id="appContainer" style="display:none;">
+        <!-- Modern Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="header-brand">
+                    <h1 class="header-title">MEMSEC PACD Monitoring</h1>
+                    <p class="header-subtitle">MEMSEC Public Assistance Complaint Desk</p>
+                </div>
+                <div class="header-meta">
+                    <div class="status-badge">
+                        <span class="status-dot"></span>
+                        System Online
+                    </div>
+                    <div class="last-sync" id="lastUpdated">Last updated: Just now</div>
+                    <div class="header-user" id="headerUser" style="display:none;">
+                        <span class="user-name" id="headerUserName"></span>
+                        <span class="user-role-badge" id="headerUserRole"></span>
+                        <button class="btn btn-sm" id="manageUsersBtn" style="display:none;">Manage Users</button>
+                        <button class="btn btn-sm btn-danger" id="logoutBtn">Sign Out</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Modern Navigation -->
+        <nav class="app-nav">
+            <div class="nav-content">
+                <div class="nav-tabs">
+                    <button class="nav-tab active" data-tab="entry">Data Entry</button>
+                    <button class="nav-tab" data-tab="records">Records</button>
+                    <button class="nav-tab" data-tab="dashboard">Dashboard</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="app-main">
+            <!-- Data Entry Tab -->
+            <div id="entry" class="tab-panel active">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Daily Entry Form</h2>
+                    </div>
+                    <div class="card-body">
+                        <form id="dailyEntryForm">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label" for="date">Date:</label>
+                                    <input type="date" id="date" class="form-control" required readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="officerName">Name of Officer-in-Charge:</label>
+                                    <select id="officerName" class="form-control" required>
+                                        <option value="">Select Officer...</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h3 class="form-section-title">Clients Served</h3>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label" for="newMember">Registration:</label>
+                                        <input type="number" id="newMember" class="form-control" min="0" value="0" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="amendment">Amendment:</label>
+                                        <input type="number" id="amendment" class="form-control" min="0" value="0" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="yakapAssignment">Yakap Assignment:</label>
+                                        <input type="number" id="yakapAssignment" class="form-control" min="0" value="0" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="er2">ER2:</label>
+                                        <input type="number" id="er2" class="form-control" min="0" value="0" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="inquiry">Inquiry:</label>
+                                        <input type="number" id="inquiry" class="form-control" min="0" value="0" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="printIdMdr">Print of ID & MDR:</label>
+                                        <input type="number" id="printIdMdr" class="form-control" min="0" value="0" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="totalTransactions">Total No. of Transaction:</label>
+                                        <input type="number" id="totalTransactions" class="form-control" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="totalClients">No. of Clients Served:</label>
+                                        <input type="number" id="totalClients" class="form-control" min="0" value="0" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h3 class="form-section-title">Customer Satisfaction Survey (Participation)</h3>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label" for="yesCount">Answered Survey:</label>
+                                        <input type="number" id="yesCount" class="form-control" min="0" value="0" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="noCount">Did Not Answer:</label>
+                                        <input type="number" id="noCount" class="form-control" min="0" value="0" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="btn-group">
+                                <button type="submit" class="btn btn-primary">Save Record</button>
+                                <button type="button" class="btn btn-secondary" id="clearForm">Clear</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Records Tab -->
+            <div id="records" class="tab-panel">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Records Management</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="controls-bar">
+                            <div class="search-group">
+                                <input type="text" id="searchInput" class="search-input" placeholder="Search by date or officer name...">
+                                <input type="date" id="filterDate" class="search-input" placeholder="Filter by date...">
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn btn-secondary" id="exportCSV">Export All</button>
+                                <button class="btn btn-secondary" id="exportWeeklySummary">Weekly Summary</button>
+                                <button class="btn btn-secondary" id="exportMonthlySummary">Monthly Summary</button>
+                                <button class="btn btn-secondary" id="exportCustomRange">Custom Range</button>
+                                <button class="btn btn-secondary" id="viewRecentlyDeleted">Recently Deleted</button>
+                                <button class="btn btn-secondary" id="viewHistory">History</button>
+                                <button class="btn btn-secondary" id="backupData">Backup Data</button>
+                                <button class="btn btn-secondary" id="restoreData">Restore Data</button>
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <table id="recordsTable" class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th title="Unique record identifier from database">ID</th>
+                                        <th title="Date when the record was created">Date</th>
+                                        <th title="Name of the officer who served the clients">Officer</th>
+                                        <th title="New member registrations count">Reg.</th>
+                                        <th title="Amendments processed count">Amend.</th>
+                                        <th title="Yakap assignments count">Yakap</th>
+                                        <th title="ER2 transactions count">ER2</th>
+                                        <th title="Inquiries and Print ID/MDR combined (Inquiry + Print ID/MDR)">Others</th>
+                                        <th title="Total number of transactions (auto-calculated sum)">Trans.</th>
+                                        <th title="Number of clients served (manual input)">Clients</th>
+                                        <th title="Clients who answered the satisfaction survey">Yes</th>
+                                        <th title="Clients who did not answer the satisfaction survey">No</th>
+                                        <th title="Edit or delete this record">Act.</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recordsTableBody">
+                                    <!-- Records will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-panel">
+                <div class="card">
+                    <div class="card-header" style="display:flex; align-items:center; justify-content:space-between;">
+                        <h2 class="card-title">Dashboard</h2>
+                        <button class="btn btn-secondary" id="exportDashboardPDF">Export as PDF</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-label">Total Records</div>
+                                <div class="stat-value" id="totalRecords">0</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Total Clients Served</div>
+                                <div class="stat-value" id="totalClientsServed">0</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Survey Response Rate</div>
+                                <div class="stat-value" id="satisfactionRate">0%</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Average Daily Clients</div>
+                                <div class="stat-value" id="avgDailyClients">0</div>
+                            </div>
+                        </div>
+
+                        <div class="charts-grid">
+                            <div class="chart-card">
+                                <h3 class="chart-title">Clients Served Trend</h3>
+                                <div class="chart-container">
+                                    <canvas id="clientsChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="chart-card">
+                                <h3 class="chart-title">Survey Participation</h3>
+                                <div class="chart-container">
+                                    <canvas id="satisfactionChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modern Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Edit Record</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" id="editId">
+                    <div class="form-group">
+                        <label class="form-label" for="editDate">Date:</label>
+                        <input type="date" id="editDate" class="form-control" required readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editOfficerName">Officer Name:</label>
+                        <select id="editOfficerName" class="form-control" required>
+                            <option value="">Select Officer...</option>
+                        </select>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="editNewMember">Registration:</label>
+                            <input type="number" id="editNewMember" class="form-control" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editAmendment">Amendment:</label>
+                            <input type="number" id="editAmendment" class="form-control" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editYakapAssignment">Yakap Assignment:</label>
+                            <input type="number" id="editYakapAssignment" class="form-control" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editEr2">ER2:</label>
+                            <input type="number" id="editEr2" class="form-control" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editInquiry">Inquiry:</label>
+                            <input type="number" id="editInquiry" class="form-control" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editPrintIdMdr">Print of ID & MDR:</label>
+                            <input type="number" id="editPrintIdMdr" class="form-control" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editTotalTransactions">Total No. of Transaction:</label>
+                            <input type="number" id="editTotalTransactions" class="form-control" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editTotalClients">No. of Clients Served:</label>
+                            <input type="number" id="editTotalClients" class="form-control" min="0" required>
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="editYesCount">Answered Survey:</label>
+                            <input type="number" id="editYesCount" class="form-control" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editNoCount">Did Not Answer:</label>
+                            <input type="number" id="editNoCount" class="form-control" min="0" required>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary">Update Record</button>
+                        <button type="button" class="btn btn-secondary" id="cancelEdit">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content" style="max-width: 680px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Activity History</h3>
+                <button class="modal-close" id="closeHistoryModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="historyList" class="history-list">
+                    <p style="color: var(--gray-400); text-align:center; padding: 24px 0;">Loading history...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recently Deleted Modal -->
+    <div id="recentlyDeletedModal" class="modal">
+        <div class="modal-content" style="max-width: 680px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Recently Deleted Records</h3>
+                <button class="modal-close" id="closeRecentlyDeletedModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--gray-500); font-size: 0.85rem; margin-bottom: 16px;">
+                    Records are kept for 30 days before being permanently deleted. Records with less than 3 days remaining are highlighted.
+                </p>
+                <div id="recentlyDeletedList" class="history-list">
+                    <p style="color: var(--gray-400); text-align:center; padding: 24px 0;">Loading...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Summary Modal -->
+    <div id="exportSummaryModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="exportSummaryTitle">Export Summary</h3>
+                <button class="modal-close" id="closeExportModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="weekPickerGroup" class="form-group" style="display:none;">
+                    <label class="form-label">Select Week</label>
+                    <input type="week" id="weekPicker" class="form-control">
+                    <p class="form-hint">Only Monday-Friday records will be exported (weekends excluded).</p>
+                </div>
+                <div id="monthPickerGroup" class="form-group" style="display:none;">
+                    <label class="form-label">Select Month</label>
+                    <input type="month" id="monthPicker" class="form-control">
+                    <p class="form-hint">Choose the month you want to export.</p>
+                </div>
+                <div id="customRangeGroup" class="form-group" style="display:none;">
+                    <label class="form-label">From Date</label>
+                    <input type="date" id="customFromDate" class="form-control" style="margin-bottom: 8px;">
+                    <label class="form-label">To Date</label>
+                    <input type="date" id="customToDate" class="form-control">
+                    <p class="form-hint">Choose a custom date range to export.</p>
+                </div>
+                <div class="btn-group" style="margin-top: 16px;">
+                    <button class="btn btn-primary" id="confirmExportSummary">Export</button>
+                    <button class="btn btn-secondary" id="closeExportModal2">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel Modal -->
+    <div id="adminPanelModal" class="modal">
+        <div class="modal-content" style="max-width: 720px;">
+            <div class="modal-header">
+                <h3 class="modal-title">User Management</h3>
+                <button class="modal-close" id="closeAdminPanel">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Create Officer -->
+                <div class="admin-section">
+                    <h4 class="admin-section-title">Create Officer Account</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" id="newOfficerName" class="form-control" placeholder="e.g. Juan dela Cruz">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" id="newOfficerEmail" class="form-control" placeholder="officer@memsec.gov">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Password</label>
+                            <div style="position:relative;">
+                                <input type="password" id="newOfficerPassword" class="form-control" placeholder="Minimum 6 characters" style="padding-right:40px;">
+                                <button type="button" class="password-toggle-form" onclick="app.togglePassword('newOfficerPassword')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Role</label>
+                            <select id="newOfficerRole" class="form-control">
+                                <option value="officer">Officer</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="createOfficerBtn">Create Account</button>
+                </div>
+
+                <!-- Officers List -->
+                <div class="admin-section">
+                    <h4 class="admin-section-title">Officer Accounts</h4>
+                    <div id="officersList" class="officers-list">
+                        <p style="color:var(--gray-400);text-align:center;padding:16px;">Loading...</p>
+                    </div>
+                </div>
+
+                <!-- Login History -->
+                <div class="admin-section" style="margin-top: 24px;">
+                    <h4 class="admin-section-title">Login History</h4>
+                    <div id="loginHistoryList" class="officers-list" style="max-height: 250px; overflow-y: auto;">
+                        <p style="color:var(--gray-400);text-align:center;padding:16px;">Loading history...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div id="resetPasswordModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Send Password Reset Email</h3>
+                <button class="modal-close" id="closeResetPasswordModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="resetPasswordFor" style="margin-bottom:16px;color:var(--gray-600);font-size:0.95rem;"></p>
+                <p style="margin-bottom:16px;color:var(--gray-500);font-size:0.85rem;">
+                    A password reset link will be sent to this user's email address. Please check your SPAM folder if you cannot see the email.  You can use it to set a new password.
+                </p>
+                <div class="btn-group" style="margin-top:16px;">
+                    <button class="btn btn-primary" id="confirmResetPassword">Send Reset Email</button>
+                    <button class="btn btn-secondary" id="closeResetPasswordModal2">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden file input for data restore -->
+    <input type="file" id="fileInput" accept=".json" style="display: none;">
+
+    <!-- Confirm Action Modal -->
+    <div id="confirmActionModal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center; border-radius: 12px; padding: 0;">
+            <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
+                <h3 class="modal-title" id="confirmActionTitle" style="width: 100%; text-align: center;">Confirm</h3>
+                <button class="modal-close" id="closeConfirmModal" style="position: absolute; right: 16px; top: 16px;">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 16px 24px 32px;">
+                <p id="confirmActionMessage" style="margin-bottom: 24px; color: var(--gray-600); font-size: 0.95rem;"></p>
+                <div class="btn-group" style="justify-content: center;">
+                    <button class="btn btn-secondary" id="confirmCancelBtn" style="min-width: 100px;">Cancel</button>
+                    <button class="btn btn-primary" id="confirmActionBtn" style="min-width: 100px;">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
