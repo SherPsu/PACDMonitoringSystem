@@ -15,5 +15,9 @@
   "type": "module",
   "devDependencies": {
     "vite": "^8.0.12"
+  },
+  "dependencies": {
+    "docx": "^9.6.1",
+    "pdfkit": "^0.18.0"
   }
 }

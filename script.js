@@ -207,6 +207,12 @@ class PACDMonitoringSystem {
             if (e.target === document.getElementById('recentlyDeletedModal')) this.closeRecentlyDeletedModal();
         });
 
+        // Remarks modal
+        document.getElementById('closeRemarksModal').addEventListener('click', () => this.closeRemarksModal());
+        document.getElementById('remarksModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('remarksModal')) this.closeRemarksModal();
+        });
+
         // Export summary modal
         document.getElementById('closeExportModal').addEventListener('click', () => this.closeExportModal());
         document.getElementById('closeExportModal2').addEventListener('click', () => this.closeExportModal());
@@ -459,7 +465,7 @@ class PACDMonitoringSystem {
                 if (current) sel.value = current;
             });
 
-            // Auto-select and lock the dropdown for officers
+            // Auto-select and lock the dropdown for officers only
             if (this.currentUser?.role === 'officer') {
                 const sel = document.getElementById('officerName');
                 if (sel) {
@@ -467,6 +473,15 @@ class PACDMonitoringSystem {
                     sel.style.pointerEvents = 'none';
                     sel.style.opacity       = '0.7';
                     sel.style.cursor        = 'not-allowed';
+                }
+            } else {
+                // For admins, ensure dropdown is not locked and is empty
+                const sel = document.getElementById('officerName');
+                if (sel) {
+                    sel.style.pointerEvents = '';
+                    sel.style.opacity       = '';
+                    sel.style.cursor        = '';
+                    sel.value = '';
                 }
             }
         } catch (e) {
@@ -643,6 +658,7 @@ class PACDMonitoringSystem {
             total_clients: parseInt(document.getElementById('totalClients').value) || 0,
             yes_count: parseInt(document.getElementById('yesCount').value) || 0,
             no_count: parseInt(document.getElementById('noCount').value) || 0,
+            remarks: document.getElementById('remarks').value || '',
             created_at: new Date().toISOString(),
             created_by_uid: this.currentUser?.uid || null
         };
@@ -742,7 +758,7 @@ class PACDMonitoringSystem {
         const tbody = document.getElementById('recordsTableBody');
         
         if (records.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="12" class="empty-state">No records found. Start by adding a new record!</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="13" class="empty-state">No records found. Start by adding a new record!</td></tr>';
             return;
         }
 
@@ -768,6 +784,9 @@ class PACDMonitoringSystem {
                 <td><strong>${record.total_clients}</strong></td>
                 <td>${record.yes_count}</td>
                 <td>${record.no_count}</td>
+                <td>
+                    <button class="btn-action btn-remarks" onclick="app.showRemarks('${record.id}')" title="View Remarks">💬</button>
+                </td>
                 <td>
                     <div class="action-buttons">
                         ${canEdit ? `
@@ -818,6 +837,7 @@ class PACDMonitoringSystem {
         document.getElementById('editTotalClients').value = record.total_clients;
         document.getElementById('editYesCount').value = record.yes_count;
         document.getElementById('editNoCount').value = record.no_count;
+        document.getElementById('editRemarks').value = record.remarks || '';
         document.getElementById('editModal').classList.add('active');
     }
 
@@ -856,7 +876,8 @@ class PACDMonitoringSystem {
                 total_transactions: totalTransactions,
                 total_clients:    totalClients,
                 yes_count:        yesCount,
-                no_count:         noCount
+                no_count:         noCount,
+                remarks:          document.getElementById('editRemarks').value || ''
             });
             await this.logActivity('edited', firestoreId, editedOfficer, editedDate);
             this.closeEditModal();
@@ -913,6 +934,18 @@ class PACDMonitoringSystem {
         );
     }
 
+    showRemarks(firestoreId) {
+        const record = this.records.find(r => r.id === firestoreId);
+        if (!record) return;
+
+        const remarksModal = document.getElementById('remarksModal');
+        document.getElementById('remarksDate').textContent = record.date;
+        document.getElementById('remarksOfficer').textContent = record.officer_name;
+        document.getElementById('remarksContent').textContent = record.remarks || 'No remarks';
+        
+        remarksModal.classList.add('active');
+    }
+
     async openRecentlyDeletedModal() {
         document.getElementById('recentlyDeletedModal').classList.add('active');
         await this.loadRecentlyDeleted();
@@ -920,6 +953,10 @@ class PACDMonitoringSystem {
 
     closeRecentlyDeletedModal() {
         document.getElementById('recentlyDeletedModal').classList.remove('active');
+    }
+
+    closeRemarksModal() {
+        document.getElementById('remarksModal').classList.remove('active');
     }
 
     async loadRecentlyDeleted() {

@@ -171,6 +171,14 @@
                                 </div>
                             </div>
 
+                            <div class="form-section">
+                                <h3 class="form-section-title">Remarks</h3>
+                                <div class="form-group">
+                                    <label class="form-label optional" for="remarks">Additional Remarks (Optional):</label>
+                                    <textarea id="remarks" class="form-control" placeholder="Enter any remarks or notes..." rows="4" style="resize: vertical;"></textarea>
+                                </div>
+                            </div>
+
                             <div class="btn-group">
                                 <button type="submit" class="btn btn-primary">Save Record</button>
                                 <button type="button" class="btn btn-secondary" id="clearForm">Clear</button>
@@ -220,6 +228,7 @@
                                         <th title="Number of clients served (manual input)">Clients</th>
                                         <th title="Clients who answered the satisfaction survey">Yes</th>
                                         <th title="Clients who did not answer the satisfaction survey">No</th>
+                                        <th title="View remarks">Remarks</th>
                                         <th title="Edit or delete this record">Act.</th>
                                     </tr>
                                 </thead>
@@ -342,6 +351,10 @@
                             <label class="form-label" for="editNoCount">Did Not Answer:</label>
                             <input type="number" id="editNoCount" class="form-control" min="0" required>
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label optional" for="editRemarks">Remarks:</label>
+                        <textarea id="editRemarks" class="form-control" placeholder="Enter any remarks or notes..." rows="4" style="resize: vertical;"></textarea>
                     </div>
                     <div class="btn-group">
                         <button type="submit" class="btn btn-primary">Update Record</button>
@@ -492,6 +505,24 @@
                 <div class="btn-group" style="margin-top:16px;">
                     <button class="btn btn-primary" id="confirmResetPassword">Send Reset Email</button>
                     <button class="btn btn-secondary" id="closeResetPasswordModal2">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remarks Modal -->
+    <div id="remarksModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Remarks</h3>
+                <button class="modal-close" id="closeRemarksModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--gray-600); margin-bottom: 16px;">
+                    <strong>Date:</strong> <span id="remarksDate"></span> | <strong>Officer:</strong> <span id="remarksOfficer"></span>
+                </p>
+                <div style="background-color: var(--gray-50); padding: 16px; border-radius: 8px; border-left: 4px solid var(--primary-color); min-height: 100px;">
+                    <p id="remarksContent" style="margin: 0; white-space: pre-wrap; word-break: break-word; color: var(--gray-700);">No remarks</p>
                 </div>
             </div>
         </div>
